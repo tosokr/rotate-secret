@@ -1,5 +1,8 @@
 name: 'Rotate Service Principal Secret'
 description: 'Rotate the Service Principal Secret'
+branding:
+  icon: rotate-cw
+  color: white
 inputs:
   client-id:
     description: 'The client/application id to rotate'
