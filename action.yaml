@@ -1,5 +1,5 @@
-name: 'Rotate Service Principal Secret'
-description: 'Rotate the Service Principal Secret'
+name: 'Rotate Azure Active Directory Service Principal secret'
+description: 'Rotate Azure Active Directory Service Principal secret'
 branding:
   icon: rotate-cw
   color: white
