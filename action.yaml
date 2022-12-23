@@ -1,0 +1,38 @@
+name: 'Rotate Service Principal Secret'
+description: 'Rotate the Service Principal Secret'
+inputs:
+  client-id:
+    description: 'The client/application id to rotate'
+    required: true    
+  secret-validity-in-days:
+    description: 'New secret validity in days'
+    required: true
+    default: '90'
+outputs:
+  new-secret:
+    description: "The newly generated secret"
+    value: ${{ steps.rotate-secret.outputs.my_secret }}
+runs:
+  using: "composite"
+  steps:   
+    - id: rotate-secret      
+      shell: bash      
+      run: |      
+        my_app_id=${{ inputs.client-id }}      
+        secret_validity_in_days=${{ inputs.secret-validity-in-days }}
+        current_date=$(date -u +"%Y-%m-%dT%H:%M:%S")
+        client_secret_end_date=$(date -d "+$secret_validity_in_days days" -u +"%Y-%m-%dT%H:%M:%S")
+        client_secret_name=secret_$current_date
+           
+        # add new secret
+        my_secret=$(az ad app credential reset --id $my_app_id --append --display-name $client_secret_name --end-date $client_secret_end_date --query password --only-show-errors --output tsv)
+        echo "::add-mask::$my_secret"
+        echo "my_secret=$my_secret" >> $GITHUB_OUTPUT
+ 
+        # delete expired secrets
+        for keyId in $(az ad app credential list --id $my_app_id --query "[].keyId" -o tsv); do
+          endDateTime=$(az ad app credential list --id $my_app_id --query "[?keyId=='$keyId'].endDateTime" -o tsv)
+          if [[ $(date -d "$endDateTime") < $(date -u +%s) ]]; then
+            az ad app credential delete --id $my_app_id --key-id $keyId
+          fi
+        done
